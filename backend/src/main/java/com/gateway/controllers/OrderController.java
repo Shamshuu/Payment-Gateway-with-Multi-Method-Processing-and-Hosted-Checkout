@@ -61,4 +61,25 @@ public class OrderController {
             )
         ));
     }
+
+    @GetMapping("/{id}/public")
+    public ResponseEntity<?> getPublicOrder(@PathVariable String id) {
+        Optional<Order> orderOpt = orderService.getOrder(id);
+
+        if (orderOpt.isPresent()) {
+            Order order = orderOpt.get();
+            // Return only safe details (exclude merchant internal info if needed)
+            return ResponseEntity.ok(Map.of(
+                "id", order.getId(),
+                "amount", order.getAmount(),
+                "currency", order.getCurrency(),
+                "merchant_id", order.getMerchantId(), // Needed for validation context
+                "status", order.getStatus()
+            ));
+        }
+
+        return ResponseEntity.status(404).body(Map.of(
+            "error", Map.of("code", "NOT_FOUND_ERROR", "description", "Order not found")
+        ));
+    }
 }
