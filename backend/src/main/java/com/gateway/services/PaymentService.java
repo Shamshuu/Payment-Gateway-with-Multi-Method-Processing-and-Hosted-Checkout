@@ -6,16 +6,19 @@ import com.gateway.models.Order;
 import com.gateway.models.Payment;
 import com.gateway.repositories.OrderRepository;
 import com.gateway.repositories.PaymentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
-import java.util.UUID;
 
 @Service
 public class PaymentService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
@@ -23,7 +26,6 @@ public class PaymentService {
     private final IdGenerator idGenerator;
     private final Random random = new Random();
 
-    // Configuration Injection
     @Value("${gateway.test.mode}")
     private boolean testMode;
 
@@ -54,11 +56,12 @@ public class PaymentService {
     }
 
     public Payment processPayment(Merchant merchant, CreatePaymentRequest request) throws Exception {
+        logger.info("--> Processing Payment for Order: {}", request.getOrderId());
+
         // 1. Validate Order
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
-        // If merchant is provided (Authenticated API call), validate ownership
         if (merchant != null && !order.getMerchantId().equals(merchant.getId())) {
             throw new IllegalArgumentException("Order does not belong to this merchant");
         }
@@ -71,7 +74,7 @@ public class PaymentService {
         payment.setAmount(order.getAmount());
         payment.setCurrency(order.getCurrency());
         payment.setMethod(request.getMethod());
-        payment.setStatus("processing"); // Mandatory initial status
+        payment.setStatus("processing");
 
         if ("upi".equalsIgnoreCase(request.getMethod())) {
             if (!validationService.isValidVpa(request.getVpa())) {
@@ -93,9 +96,11 @@ public class PaymentService {
 
         // 3. Persist Initial State
         payment = paymentRepository.save(payment);
+        logger.info("--> Payment Created: {}. Status: processing. Starting Delay...", payment.getId());
 
         // 4. Simulate Processing (Delay)
         simulateDelay();
+        logger.info("--> Delay Finished. Determining outcome...");
 
         // 5. Determine Outcome
         boolean isSuccess = determineOutcome(request.getMethod());
@@ -103,18 +108,17 @@ public class PaymentService {
         // 6. Update Final Status
         if (isSuccess) {
             payment.setStatus("success");
-            // Also update order status
             order.setStatus("paid");
             orderRepository.save(order);
+            logger.info("--> Payment Success!");
         } else {
             payment.setStatus("failed");
             payment.setErrorCode("PAYMENT_FAILED");
             payment.setErrorDescription("Transaction declined by bank");
+            logger.info("--> Payment Failed!");
         }
         
-        // Update timestamp manually since we are modifying same object
         payment.setUpdatedAt(LocalDateTime.now());
-        
         return paymentRepository.save(payment);
     }
     
@@ -125,6 +129,7 @@ public class PaymentService {
     private void simulateDelay() {
         try {
             long delay = testMode ? testProcessingDelay : (delayMin + random.nextLong(delayMax - delayMin));
+            logger.info("--> Sleeping for {} ms", delay);
             Thread.sleep(delay);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -136,7 +141,7 @@ public class PaymentService {
             return testPaymentSuccess;
         }
         double threshold = "upi".equalsIgnoreCase(method) ? upiSuccessRate : cardSuccessRate;
-        return random.nextDouble() < threshold; // e.g., 0.85 < 0.90 (Success)
+        return random.nextDouble() < threshold;
     }
 
     public java.util.List<Payment> getPaymentsForMerchant(Merchant merchant) {
