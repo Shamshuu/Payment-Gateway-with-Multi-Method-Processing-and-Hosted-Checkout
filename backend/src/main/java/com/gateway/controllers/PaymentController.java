@@ -59,6 +59,20 @@ public class PaymentController {
         }
     }
 
+    @GetMapping("/payments/{id}/public")
+    public ResponseEntity<?> getPublicPaymentStatus(@PathVariable String id) {
+        Optional<Payment> payment = paymentService.getPayment(id);
+        if (payment.isPresent()) {
+            // Return minimal info for security
+            return ResponseEntity.ok(Map.of(
+                "id", payment.get().getId(),
+                "status", payment.get().getStatus(),
+                "error_description", payment.get().getErrorDescription() != null ? payment.get().getErrorDescription() : ""
+            ));
+        }
+        return ResponseEntity.status(404).body(Map.of("error", "Payment not found"));
+    }
+
     @GetMapping("/payments")
     public ResponseEntity<?> getAllPayments(HttpServletRequest request) {
         Merchant merchant = (Merchant) request.getAttribute("merchant");
