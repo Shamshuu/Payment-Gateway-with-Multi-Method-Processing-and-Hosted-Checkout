@@ -18,7 +18,7 @@ public class AuthenticationFilter implements Filter {
         this.merchantRepository = merchantRepository;
     }
 
-    @Override
+     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         
@@ -26,9 +26,9 @@ public class AuthenticationFilter implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         String path = httpRequest.getRequestURI();
 
-        // 1. Allow Public Endpoints (Health, CORS preflight, and future public checkout APIs)
+        // FIX: Removed the trailing slash in the check below
         if (path.startsWith("/health") || 
-            path.contains("/public/") || 
+            path.contains("/public") || 
             httpRequest.getMethod().equals("OPTIONS")) {
             chain.doFilter(request, response);
             return;
