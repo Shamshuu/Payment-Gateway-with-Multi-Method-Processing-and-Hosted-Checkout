@@ -58,4 +58,10 @@ public class PaymentController {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/payments")
+    public ResponseEntity<?> getAllPayments(HttpServletRequest request) {
+        Merchant merchant = (Merchant) request.getAttribute("merchant");
+        return ResponseEntity.ok(paymentService.getPaymentsForMerchant(merchant));
+    }
 }

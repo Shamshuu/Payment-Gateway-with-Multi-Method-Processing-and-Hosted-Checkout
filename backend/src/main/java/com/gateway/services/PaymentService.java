@@ -138,4 +138,8 @@ public class PaymentService {
         double threshold = "upi".equalsIgnoreCase(method) ? upiSuccessRate : cardSuccessRate;
         return random.nextDouble() < threshold; // e.g., 0.85 < 0.90 (Success)
     }
+
+    public java.util.List<Payment> getPaymentsForMerchant(Merchant merchant) {
+        return paymentRepository.findByMerchantId(merchant.getId());
+    }
 }
