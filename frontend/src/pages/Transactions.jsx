@@ -10,11 +10,10 @@ export default function Transactions() {
     if (!dateInput) return 'N/A';
     try {
         let date;
-        // Handle Java Array format [2026, 1, 7, 10, 30]
         if (Array.isArray(dateInput)) {
         date = new Date(
             dateInput[0],
-            dateInput[1] - 1, // Month is 0-indexed
+            dateInput[1] - 1,
             dateInput[2],
             dateInput[3] || 0,
             dateInput[4] || 0,
