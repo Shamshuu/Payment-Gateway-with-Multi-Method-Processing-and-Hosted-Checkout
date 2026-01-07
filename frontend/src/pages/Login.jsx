@@ -14,7 +14,6 @@ export default function Login() {
     const endpoint = isRegistering ? '/auth/register' : '/auth/login';
     
     try {
-      // FIX: Send both email AND password
       const res = await axios.post(`http://localhost:8000/api/v1${endpoint}`, {
         email: email,
         password: password 
