@@ -5,21 +5,24 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-@Data
+@Data // Lombok handles getters/setters automatically
 @Entity
 @Table(name = "merchants")
 public class Merchant {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    private String id;
 
     @Column(nullable = false)
-    private String name;
+    private String name = "Merchant"; 
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    // --- ADD THIS FIELD ---
+    @Column(nullable = false)
+    private String password; 
+    // ----------------------
 
     @Column(name = "api_key", nullable = false, unique = true, length = 64)
     private String apiKey;
@@ -40,4 +43,8 @@ public class Merchant {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    // Explicit Getter/Setter for Password if Lombok acts up
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }
