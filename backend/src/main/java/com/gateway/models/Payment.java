@@ -1,60 +1,91 @@
 package com.gateway.models;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-@Data
 @Entity
-@Table(name = "payments", indexes = {
-    @Index(name = "idx_payment_order", columnList = "order_id"),
-    @Index(name = "idx_payment_status", columnList = "status")
-})
+@Table(name = "payments")
 public class Payment {
+
     @Id
-    @Column(length = 64)
-    private String id; // Custom format: "pay_" + 16 chars
+    private String id; // Changed to String
 
-    @Column(name = "order_id", nullable = false, length = 64)
-    private String orderId;
+    @Column(name = "order_id")
+    private String orderId; // Changed to String
 
-    @Column(name = "merchant_id", nullable = false)
-    private UUID merchantId;
+    @Column(name = "merchant_id")
+    private String merchantId; // Changed to String
 
-    @Column(nullable = false)
     private Long amount;
+    private String currency;
+    private String status;
+    private String method;
 
-    @Column(length = 3)
-    private String currency = "INR";
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false, length = 20)
-    private String method; // "upi" or "card"
+    // Getters and Setters
+    public String getId() {
+        return id;
+    }
 
-    @Column(length = 20)
-    private String status; // "processing", "success", "failed"
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    private String vpa;
+    public String getOrderId() {
+        return orderId;
+    }
 
-    @Column(name = "card_network", length = 20)
-    private String cardNetwork;
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
 
-    @Column(name = "card_last4", length = 4)
-    private String cardLast4;
+    public String getMerchantId() {
+        return merchantId;
+    }
 
-    @Column(name = "error_code", length = 50)
-    private String errorCode;
+    public void setMerchantId(String merchantId) {
+        this.merchantId = merchantId;
+    }
 
-    @Column(name = "error_description", columnDefinition = "TEXT")
-    private String errorDescription;
+    public Long getAmount() {
+        return amount;
+    }
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    public void setAmount(Long amount) {
+        this.amount = amount;
+    }
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
