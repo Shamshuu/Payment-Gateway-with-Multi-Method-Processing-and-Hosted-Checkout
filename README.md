@@ -67,6 +67,13 @@ No local Java or Node installation required.
 
 ## 🏃‍♂️ How to Run
 
+### Clone the Repository
+
+```bash
+git clone <https://github.com/Shamshuu/Payment-Gateway-with-Multi-Method-Processing-and-Hosted-Checkout/tree/main>
+cd Payment-Gateway-with-Multi-Method-Processing-and-Hosted-Checkout
+```
+
 ```bash
 docker-compose up -d --build
 ```
@@ -92,25 +99,48 @@ docker ps
 
 ## 🧪 End-to-End Testing
 
-### Step 1: Login
-- Email: `test@example.com`
-- Password: any
+### Step 1: Login or Register
+
+### Step 2: Once logged in, copy your Key ID and Key Secret from the home screen.
+
 
 ### Step 2: Create Order
+
+#### Use your terminal to create an order. Replace YOUR_KEY and YOUR_SECRET with the values you just copied.
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/orders \
 -H "Content-Type: application/json" \
--H "X-Api-Key: key_test_abc123" \
--H "X-Api-Secret: secret_test_xyz789" \
+-H "X-Api-Key: YOUR_KEY" \
+-H "X-Api-Secret: YOUR_SECRET" \
 -d '{ "amount": 50000, "currency": "INR", "receipt": "receipt_1" }'
 ```
 
+#### Copy the "id" from the JSON response.
+
+
 ### Step 3: Checkout
+
+#### Replace YOUR_ORDER_ID with id from the JSON response.
 
 ```
 http://localhost:3001/checkout?order_id=YOUR_ORDER_ID
 ```
+
+#### Choose UPI or Card, enter dummy details, and click Pay.
+
+#### Wait for the "Payment Successful" message.
+
+#### Click pay again, if payment fails.
+
+
+### Step 4: Verify Transaction
+
+#### Go back to your Merchant Dashboard.
+
+#### Click on the Transactions tab.
+
+#### Refresh the page. You will see the new transaction listed with its status and date!
 
 ---
 
