@@ -1,44 +1,42 @@
 package com.gateway.models;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-@Data
 @Entity
-@Table(name = "orders", indexes = {
-    @Index(name = "idx_order_merchant", columnList = "merchant_id")
-})
+@Table(name = "orders")
 public class Order {
+
     @Id
-    @Column(length = 64)
-    private String id; // Custom format: "order_" + 16 chars
+    private String id; // Changed to String
 
-    @Column(name = "merchant_id", nullable = false)
-    private UUID merchantId;
-
-    @Column(nullable = false)
-    private Long amount; // stored in paise
-
-    @Column(length = 3)
-    private String currency = "INR";
-
+    private Long amount;
+    private String currency;
     private String receipt;
+    private String status;
+    
+    @Column(name = "merchant_id")
+    private String merchantId; // Changed to String
 
-    @Column(columnDefinition = "TEXT") // Simplified JSON storage as text for compatibility
-    private String notes;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(length = 20)
-    private String status = "created";
+    // Getters and Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    public Long getAmount() { return amount; }
+    public void setAmount(Long amount) { this.amount = amount; }
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
+
+    public String getReceipt() { return receipt; }
+    public void setReceipt(String receipt) { this.receipt = receipt; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getMerchantId() { return merchantId; }
+    public void setMerchantId(String merchantId) { this.merchantId = merchantId; }
 }
