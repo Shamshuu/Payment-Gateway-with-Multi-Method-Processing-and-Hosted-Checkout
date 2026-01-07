@@ -101,7 +101,7 @@ docker ps
 
 ### Step 1: Login or Register
 
-### Step 2: Once logged in, copy your Key ID and Key Secret from the home screen.
+#### Once logged in, copy your Key ID and Key Secret from the home screen.
 
 
 ### Step 2: Create Order
