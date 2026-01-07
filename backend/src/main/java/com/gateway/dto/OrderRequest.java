@@ -1,7 +1,5 @@
 package com.gateway.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class OrderRequest {
     
     private Long amount;
