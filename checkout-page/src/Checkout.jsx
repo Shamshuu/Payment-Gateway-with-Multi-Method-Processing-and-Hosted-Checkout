@@ -43,7 +43,7 @@ export default function Checkout() {
   const startPolling = (pid) => {
     const interval = setInterval(async () => {
       try {
-        const res = await axios.get(`${API_URL}/payments/${pid}`);
+        const res = await axios.get(`${API_URL}/payments/${pid}/public`);
         if (res.data.status === 'success') {
           setStatus('success');
           clearInterval(interval);
