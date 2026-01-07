@@ -1,6 +1,5 @@
 package com.gateway.controllers;
 
-import com.gateway.models.Merchant;
 import com.gateway.repositories.MerchantRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
