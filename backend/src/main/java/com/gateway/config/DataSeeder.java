@@ -16,10 +16,10 @@ public class DataSeeder implements CommandLineRunner {
     private String testEmail;
 
     @Value("${gateway.test.merchant.key}")
-    private String testApiKey;
+    private String testKey;
 
     @Value("${gateway.test.merchant.secret}")
-    private String testApiSecret;
+    private String testSecret;
 
     public DataSeeder(MerchantRepository merchantRepository) {
         this.merchantRepository = merchantRepository;
@@ -28,17 +28,16 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (merchantRepository.findByEmail(testEmail).isEmpty()) {
-            Merchant testMerchant = new Merchant();
-            // Hardcoded UUID as per requirements
-            testMerchant.setId(UUID.fromString("550e8400-e29b-41d4-a716-446655440000")); 
-            testMerchant.setName("Test Merchant");
-            testMerchant.setEmail(testEmail);
-            testMerchant.setApiKey(testApiKey);
-            testMerchant.setApiSecret(testApiSecret);
-            testMerchant.setActive(true);
+            Merchant merchant = new Merchant();
+            merchant.setId(UUID.randomUUID().toString());
+            merchant.setEmail(testEmail);
+            merchant.setPassword("password");
+            merchant.setApiKey(testKey);
+            merchant.setApiSecret(testSecret);
+            merchant.setName("Test Merchant");
             
-            merchantRepository.save(testMerchant);
-            System.out.println("✅ Test Merchant seeded successfully.");
+            merchantRepository.save(merchant);
+            System.out.println("✅ Test Merchant Seeded: " + testEmail);
         } else {
             System.out.println("ℹ️ Test Merchant already exists.");
         }
