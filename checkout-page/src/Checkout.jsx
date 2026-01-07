@@ -6,8 +6,8 @@ const API_URL = 'http://localhost:8000/api/v1';
 export default function Checkout() {
   const [orderId, setOrderId] = useState('');
   const [order, setOrder] = useState(null);
-  const [method, setMethod] = useState(null); // 'upi' or 'card'
-  const [status, setStatus] = useState('loading'); // loading, ready, processing, success, failed
+  const [method, setMethod] = useState(null);
+  const [status, setStatus] = useState('loading');
   const [errorMsg, setErrorMsg] = useState('');
   const [paymentId, setPaymentId] = useState('');
 
