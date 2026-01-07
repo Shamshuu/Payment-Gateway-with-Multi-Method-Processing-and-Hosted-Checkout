@@ -121,7 +121,7 @@ curl -X POST http://localhost:8000/api/v1/orders \
 
 ### Step 3: Checkout
 
-#### Replace YOUR_ORDER_ID with id from the JSON response.
+#### Replace YOUR_ORDER_ID with "id" from the JSON response.
 
 ```
 http://localhost:3001/checkout?order_id=YOUR_ORDER_ID
