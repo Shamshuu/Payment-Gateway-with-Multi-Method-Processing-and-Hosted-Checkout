@@ -1,63 +1,54 @@
 package com.gateway.config;
 
-import com.gateway.models.Merchant;
-import com.gateway.repositories.MerchantRepository;
-import jakarta.servlet.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.io.IOException;
-import java.util.Optional;
 
 @Component
-public class AuthenticationFilter implements Filter {
+public class AuthenticationFilter extends OncePerRequestFilter {
 
-    private final MerchantRepository merchantRepository;
+    @Value("${gateway.test.merchant.key}")
+    private String validKey;
 
-    public AuthenticationFilter(MerchantRepository merchantRepository) {
-        this.merchantRepository = merchantRepository;
-    }
+    @Value("${gateway.test.merchant.secret}")
+    private String validSecret;
 
-     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, 
+                                    HttpServletResponse response, 
+                                    FilterChain filterChain) throws ServletException, IOException {
         
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        String path = httpRequest.getRequestURI();
+        String path = request.getRequestURI();
 
-        // FIX: Removed the trailing slash in the check below
-        if (path.startsWith("/health") || 
-            path.contains("/public") || 
-            httpRequest.getMethod().equals("OPTIONS")) {
-            chain.doFilter(request, response);
+        // --- FIX 1: Allow OPTIONS requests (CORS Preflight) ---
+        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
+            filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. Check Headers
-        String apiKey = httpRequest.getHeader("X-Api-Key");
-        String apiSecret = httpRequest.getHeader("X-Api-Secret");
-
-        if (apiKey == null || apiSecret == null) {
-            sendError(httpResponse, "AUTHENTICATION_ERROR", "Missing API credentials");
+        // --- FIX 2: Existing Whitelist for Auth & Public ---
+        if (path.startsWith("/api/v1/auth/") || path.contains("/public")) {
+            filterChain.doFilter(request, response);
             return;
         }
 
-        // 3. Validate against Database
-        Optional<Merchant> merchantOpt = merchantRepository.findByApiKey(apiKey);
-        
-        if (merchantOpt.isPresent() && merchantOpt.get().getApiSecret().equals(apiSecret)) {
-            // Authentication Success: Store merchant in request for the Controller to use
-            request.setAttribute("merchant", merchantOpt.get());
-            chain.doFilter(request, response);
-        } else {
-            sendError(httpResponse, "AUTHENTICATION_ERROR", "Invalid API credentials");
+        // Check for API Keys on protected endpoints
+        if (path.startsWith("/api/v1/")) {
+            String apiKey = request.getHeader("X-Api-Key");
+            String apiSecret = request.getHeader("X-Api-Secret");
+            
+            if (apiKey == null || apiSecret == null) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing API Credentials");
+                return;
+            }
         }
-    }
 
-    private void sendError(HttpServletResponse response, String code, String desc) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        response.getWriter().write(String.format("{\"error\": {\"code\": \"%s\", \"description\": \"%s\"}}", code, desc));
+        filterChain.doFilter(request, response);
     }
 }
