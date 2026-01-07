@@ -1,150 +1,63 @@
 package com.gateway.services;
 
-import com.gateway.dto.CreatePaymentRequest;
-import com.gateway.models.Merchant;
+import com.gateway.dto.PaymentRequest;
 import com.gateway.models.Order;
 import com.gateway.models.Payment;
 import com.gateway.repositories.OrderRepository;
 import com.gateway.repositories.PaymentRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.Random;
+import java.util.List;
 
 @Service
 public class PaymentService {
 
-    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
-
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
-    private final ValidationService validationService;
-    private final IdGenerator idGenerator;
     private final Random random = new Random();
 
-    @Value("${gateway.test.mode}")
-    private boolean testMode;
-
-    @Value("${gateway.test.payment.success}")
-    private boolean testPaymentSuccess;
-
-    @Value("${gateway.test.processing.delay}")
-    private long testProcessingDelay;
-
-    @Value("${gateway.payment.upi.success-rate}")
-    private double upiSuccessRate;
-
-    @Value("${gateway.payment.card.success-rate}")
-    private double cardSuccessRate;
-
-    @Value("${gateway.simulation.delay.min}")
-    private long delayMin;
-
-    @Value("${gateway.simulation.delay.max}")
-    private long delayMax;
-
-    public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository,
-                          ValidationService validationService, IdGenerator idGenerator) {
+    public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository) {
         this.paymentRepository = paymentRepository;
         this.orderRepository = orderRepository;
-        this.validationService = validationService;
-        this.idGenerator = idGenerator;
     }
 
-    public Payment processPayment(Merchant merchant, CreatePaymentRequest request) throws Exception {
-        logger.info("--> Processing Payment for Order: {}", request.getOrderId());
-
-        // 1. Validate Order
+    public Payment processPayment(PaymentRequest request) {
         Order order = orderRepository.findById(request.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (merchant != null && !order.getMerchantId().equals(merchant.getId())) {
-            throw new IllegalArgumentException("Order does not belong to this merchant");
-        }
+        boolean isSuccess = simulateBankResponse();
 
-        // 2. Validate Payment Method
         Payment payment = new Payment();
-        payment.setId(idGenerator.generate("pay_"));
+        // Generate String ID
+        payment.setId("pay_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16));
         payment.setOrderId(order.getId());
         payment.setMerchantId(order.getMerchantId());
         payment.setAmount(order.getAmount());
         payment.setCurrency(order.getCurrency());
         payment.setMethod(request.getMethod());
-        payment.setStatus("processing");
+        payment.setStatus(isSuccess ? "success" : "failed");
 
-        if ("upi".equalsIgnoreCase(request.getMethod())) {
-            if (!validationService.isValidVpa(request.getVpa())) {
-                throw new IllegalArgumentException("INVALID_VPA");
-            }
-            payment.setVpa(request.getVpa());
-        } else if ("card".equalsIgnoreCase(request.getMethod())) {
-            if (request.getCard() == null || 
-                !validationService.isValidLuhn(request.getCard().getNumber()) ||
-                !validationService.isValidExpiry(request.getCard().getExpiryMonth(), request.getCard().getExpiryYear())) {
-                throw new IllegalArgumentException("INVALID_CARD");
-            }
-            payment.setCardNetwork(validationService.getCardNetwork(request.getCard().getNumber()));
-            String num = request.getCard().getNumber().replaceAll("[\\s-]", "");
-            payment.setCardLast4(num.substring(num.length() - 4));
-        } else {
-            throw new IllegalArgumentException("Invalid payment method");
-        }
+        paymentRepository.save(payment);
 
-        // 3. Persist Initial State
-        payment = paymentRepository.save(payment);
-        logger.info("--> Payment Created: {}. Status: processing. Starting Delay...", payment.getId());
-
-        // 4. Simulate Processing (Delay)
-        simulateDelay();
-        logger.info("--> Delay Finished. Determining outcome...");
-
-        // 5. Determine Outcome
-        boolean isSuccess = determineOutcome(request.getMethod());
-
-        // 6. Update Final Status
         if (isSuccess) {
-            payment.setStatus("success");
             order.setStatus("paid");
             orderRepository.save(order);
-            logger.info("--> Payment Success!");
-        } else {
-            payment.setStatus("failed");
-            payment.setErrorCode("PAYMENT_FAILED");
-            payment.setErrorDescription("Transaction declined by bank");
-            logger.info("--> Payment Failed!");
         }
-        
-        payment.setUpdatedAt(LocalDateTime.now());
-        return paymentRepository.save(payment);
-    }
-    
-    public Optional<Payment> getPayment(String id) {
-        return paymentRepository.findById(id);
+
+        return payment;
     }
 
-    private void simulateDelay() {
-        try {
-            long delay = testMode ? testProcessingDelay : (delayMin + random.nextLong(delayMax - delayMin));
-            logger.info("--> Sleeping for {} ms", delay);
-            Thread.sleep(delay);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    private boolean simulateBankResponse() {
+        return random.nextDouble() > 0.1; // 90% success rate
     }
 
-    private boolean determineOutcome(String method) {
-        if (testMode) {
-            return testPaymentSuccess;
-        }
-        double threshold = "upi".equalsIgnoreCase(method) ? upiSuccessRate : cardSuccessRate;
-        return random.nextDouble() < threshold;
+    public Payment getPayment(String id) {
+        return paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
     }
 
-    public java.util.List<Payment> getPaymentsForMerchant(Merchant merchant) {
-        return paymentRepository.findByMerchantId(merchant.getId());
+    public List<Payment> getPaymentsForMerchant(String merchantId) {
+        return paymentRepository.findByMerchantId(merchantId);
     }
 }
