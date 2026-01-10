@@ -70,7 +70,7 @@ No local Java or Node installation required.
 ### Clone the Repository
 
 ```bash
-git clone <https://github.com/Shamshuu/Payment-Gateway-with-Multi-Method-Processing-and-Hosted-Checkout/tree/main>
+git clone https://github.com/Shamshuu/Payment-Gateway-with-Multi-Method-Processing-and-Hosted-Checkout
 cd Payment-Gateway-with-Multi-Method-Processing-and-Hosted-Checkout
 ```
 
